@@ -8,8 +8,6 @@
 Account accounts[1000];
 int accCount = 0;
 
-
-
 int findAccByNum(long accNo)
 {
     int i;
@@ -22,7 +20,7 @@ int findAccByNum(long accNo)
 }
 /* method to write everything to the text file after modifying the accounts array*/
 int SaveAccountsInFile(const char *txtfile)
-{ 
+{
 
     FILE *f;
     f = fopen(txtfile, "w");
@@ -104,85 +102,64 @@ void UpdateAccount(const char *txtfile)
     scanf("%ld", &accN);
     clearinputbuffer();
     /* Find the account in the array */
-    int index = -1, i;
-    for (i = 0; i < accCount; i++)
+    int index;
+    if ((index = findAccByNum(accN)) >= 0)
     {
-        if (accounts[i].accNum == accN)
+        printf("Do you want to update the :\n1-Account Number\n2-Account Name");
+        scanf("%d", &choice);
+        clearinputbuffer();
+        if (choice == 1)
         {
-            index = i;
-            break;
+            long newNum;
+            do
+            {
+                printf("Enter the new account number: ");
+                scanf("%ld", &newNum);
+                clearinputbuffer();
+            } while (!isValidNumToUpdate(newNum, accounts[index].accNum));
         }
-    }
 
-    if (index == -1)
+        else if (choice == 2)
+        {
+            char newName[100];
+
+            do
+            {
+                printf("Enter the new name: ");
+                fgets(newName, sizeof(newName), stdin);
+                removeNewline(newName);
+            } while (!isValidName(newName));
+
+            strcpy(accounts[index].accHolderName, newName);
+            printf("Holder name updated successfully.\n");
+        }
+
+        else
+        {
+            printf("Invalid choice.\n");
+            return;
+        }
+
+        /* Save all accounts in file */
+        SaveAccountsInFile(txtfile);
+    }
+    else if (index == -1)
     {
         printf("Account not found\n");
         return;
     }
-
-    printf("Do you want to update the :\n1-Account Number\n2-Account Name");
-    scanf("%d", &choice);
-    clearinputbuffer();
-    if (choice == 1)
-    {
-        long newNum;
-        do
-        {
-            printf("Enter the new account number: ");
-            scanf("%ld", &newNum);
-            clearinputbuffer();
-        } while (!isValidNumToUpdate(newNum, accounts[index].accNum));
-    }
-
-    else if (choice == 2)
-    {
-        char newName[100];
-
-        do
-        {
-            printf("Enter the new name: ");
-            fgets(newName, sizeof(newName), stdin);
-            removeNewline(newName);
-        } while (!isValidName(newName));
-
-        strcpy(accounts[index].accHolderName, newName);
-        printf("Holder name updated successfully.\n");
-    }
-
-    else
-    {
-        printf("Invalid choice.\n");
-        return;
-    }
-
-    /* Save all accounts in file */
-    SaveAccountsInFile(txtfile);
 }
 
 void deleteByAccountNumber(const char *txtfile)
 {
     long accNum;
-    int i, index = -1;
+    int index, i;
 
     printf("Enter account number to delete: ");
     scanf("%ld", &accNum);
     clearinputbuffer();
     /* Find the account */
-    for (i = 0; i < accCount; i++)
-    {
-        if (accounts[i].accNum == accNum)
-        {
-            index = i;
-            break;
-        }
-    }
-
-    if (index == -1)
-    {
-        printf("Account not found\n");
-        return;
-    }
-    else
+    if ((index = findAccByNum(accNum) >= 0))
     {
         /* Shift all accounts to the left */
         for (i = index; i < accCount - 1; i++)
@@ -195,6 +172,11 @@ void deleteByAccountNumber(const char *txtfile)
         SaveAccountsInFile(txtfile);
 
         printf("Account deleted successfully\n");
+    }
+    else if (index == -1)
+    {
+        printf("Account not found\n");
+        return;
     }
 }
 
@@ -239,43 +221,40 @@ void deleteByHolderName(const char *txtfile)
 void searchByAccountNumber()
 {
     long accNum;
-    int found = 0;
 
     printf("Enter account number to search: ");
     scanf("%ld", &accNum);
     clearinputbuffer();
     int i;
-    
-        if ((i = findAccByNum(accNum)) != -1)
+
+    if ((i = findAccByNum(accNum)) >= 0)
+    {
+        /* we found the account */
+
+        printf("\n=== Account Details ===\n");
+        printf("Account Number: %ld\n", accounts[i].accNum);
+        printf("Holder Name: %s\n", accounts[i].accHolderName);
+        printf("Balance: %.2lf\n", accounts[i].Balance);
+        printf("Email: %s\n", accounts[i].email);
+        printf("Num of Ops: %d\n", accounts[i].numOfOps);
+
+        if (accounts[i].numOfOps > 0)
         {
-            found = 1;
-
-            printf("\n=== Account Details ===\n");
-            printf("Account Number: %ld\n", accounts[i].accNum);
-            printf("Holder Name: %s\n", accounts[i].accHolderName);
-            printf("Balance: %.2lf\n", accounts[i].Balance);
-            printf("Email: %s\n", accounts[i].email);
-            printf("Num of Ops: %d\n", accounts[i].numOfOps);
-
-            if (accounts[i].numOfOps > 0)
+            printf("Operations:\n");
+            int j;
+            for (j = 0; j < accounts[i].numOfOps; j++)
             {
-                printf("Operations:\n");
-                int j;
-                for (j = 0; j < accounts[i].numOfOps; j++)
-                {
-                    printf("#%d: %c  %.2lf\n", j + 1, accounts[i].Operations[j].op, accounts[i].Operations[j].amount);
-                }
+                printf("#%d: %c  %.2lf\n", j + 1, accounts[i].Operations[j].op, accounts[i].Operations[j].amount);
             }
-            else
-            {
-                printf("This account has no operations\n");
-            }
-
-            /* we found the account */
         }
-    
+        else
+        {
+            printf("This account has no operations\n");
+        }
 
-    if (!found)
+    }
+
+    else if (i == -1)
     {
         printf("Account not found\n");
     }
